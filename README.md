@@ -1,3 +1,5 @@
-# Exercise Tracker
+# Aleksi Duluzauri Portfolio
 
-This is the boilerplate for the Exercise Tracker project. Instructions for building your project can be found at https://www.freecodecamp.org/learn/apis-and-microservices/apis-and-microservices-projects/exercise-tracker
+## Description
+
+This is a freeCodeCamp Back End Development and APIs Projects. First project is: *Exercise Tracker*

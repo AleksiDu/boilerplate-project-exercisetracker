@@ -13,7 +13,8 @@
 		"express": "^4.16.4",
 		"mongodb": "^4.5.0",
 		"mongoose": "^6.3.2",
-		"mongoose-better-id": "^2.1.1"
+		"mongoose-better-id": "^2.1.1",
+		"shortid": "^2.2.16"
 	},
 	"repository": {
 		"url": "https://github.com/freeCodeCamp/boilerplate-project-exercisetracker"

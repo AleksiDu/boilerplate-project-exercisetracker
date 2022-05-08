@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 const mongo = require('mongodb');
 const mongoose = require('mongoose');
-const betterId = require('mongoose-better-id');
+const shortid = require('shortid');
 const bodyParser = require('body-parser')
 require('dotenv').config();
 
@@ -33,21 +33,26 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 // Mongoose Model & Schema
 const schema = new mongoose.Schema({
-  username: String
+  username: String,
+  _id: String
 });
 const NewUser = mongoose.model('ShortURL', schema);
 
 app.post('/api/users/', urlencodedParser, (req, res) => {
   let user = req.body.username;
   console.log(user);
+  let id = shortid.generate();
+
   let newUser = new NewUser ({
-    username: user
+    username: user,
+    _id: id
   });
   newUser.save((err, doc) => {
     if (err) return console.error.apply(err);
     res.json({
       saved: true,
-      username: newUser.username
+      username: newUser.username,
+      _id: newUser._id
     });
   });
 });
