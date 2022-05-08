@@ -57,6 +57,18 @@ app.post('/api/users/', urlencodedParser, (req, res) => {
   });
 });
 
+app.get('/api/users/', (req, res) => {
+  NewUser.find({}, (err, users) => {
+    var date = {};
+
+    users.forEach((user) => {
+      date[user._id] = user;
+    });
+    
+    res.json([date]);
+  })
+})
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
