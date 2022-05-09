@@ -58,14 +58,15 @@ app.post('/api/users/', urlencodedParser, (req, res) => {
 });
 
 app.get('/api/users/', (req, res) => {
-  NewUser.find({}, (err, users) => {
-    var date = {};
+  NewUser.find({}).then((users) => {
+    let userDate = {};
 
     users.forEach((user) => {
-      date[user._id] = user;
-    });
-    
-    res.json([date]);
+      userDate = user;
+    })
+
+    console.log([userDate]);
+      res.send([userDate])
   })
 })
 
