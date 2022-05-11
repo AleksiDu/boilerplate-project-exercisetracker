@@ -32,42 +32,169 @@ var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 // Mongoose Model & Schema
-const schema = new mongoose.Schema({
-  username: String,
-  _id: String
+const userSchema = new mongoose.Schema({
+  username: String
 });
-const NewUser = mongoose.model('ShortURL', schema);
+const exerciseSchema = new mongoose.Schema({
+  username: String,
+  description: String,
+  duration: Number,
+  date: Date
+});
+const logSchema = new mongoose.Schema({
+  username: String,
+  count: Number,
+  log: Array
+})
+const NewUser = mongoose.model('NewUser', userSchema);
+const NewExercise = mongoose.model('NewExercise', exerciseSchema);
+const NewLog = mongoose.model('NewLog', logSchema);
 
 app.post('/api/users/', urlencodedParser, (req, res) => {
-  let user = req.body.username;
-  console.log(user);
-  let id = shortid.generate();
-
-  let newUser = new NewUser ({
-    username: user,
-    _id: id
-  });
-  newUser.save((err, doc) => {
-    if (err) return console.error.apply(err);
-    res.json({
-      saved: true,
-      username: newUser.username,
-      _id: newUser._id
-    });
+  NewUser.find({ username: req.body.username }, (err, userDate) => {
+    if (err)  {
+      console.error("Error with server=>", err);
+    } else if (userDate.length === 0) {
+      const test = new NewUser({
+        _id: req.body.id,
+        username: req.body.username
+      });
+      test.save((err, data) => {
+        if (err) {
+          console.error("Error Saving Data=>", err)
+        } else {
+          res.json({
+            _id: data.id,
+            username: data.username
+          })
+        }
+      })
+    } else {
+      res.send("User Alrady Exists");
+    }
   });
 });
 
 app.get('/api/users/', (req, res) => {
-  NewUser.find({}).then((users) => {
-    let userDate = {};
+  NewUser.find({}, (err, data) => {
+    if (err) {
+      res.send("No Users", err)
+    } else {
+      res.json(data);
+    }
+  });
+});
 
-    users.forEach((user) => {
-      userDate = user;
-    })
+app.post('/api/users/:_id/exercises', urlencodedParser, (req, res) => {
+ let idJson = { id: req.params._id};
+ let checkDate = new Date(req.body.date);
+ let idToCheck = idJson.id;
+ let noDateHandler = () => {
+   if (checkDate instanceof Date && !isNaN(checkDate)) {
+     return checkDate;
+   } else {
+     checkDate = new Date();
+   }
+ }
+  NewUser.findById(idToCheck, (err, data) => {
+    noDateHandler(checkDate);
 
-    console.log([userDate]);
-      res.send([userDate])
+    if (err) {
+      console.error("Error With Id =>", err);
+    } else {
+      const test = new NewExercise({
+        username: data.username,
+        description: req.body.description,
+        duration: req.body.duration,
+        date: checkDate.toDateString()
+      });
+
+      test.save((err, data) => {
+        if (err) {
+          console.error("Error With Saving =>", err);
+        } else {
+          console.log("Successfull Save");
+          res.json({
+            _id: idToCheck,
+            username: data.username,
+            description: data.description,
+            duration: data.duration,
+            date: data.date.toDateString()
+          })
+        }
+      })
+    }
+  });
+});
+
+app.get('api/users/:_id/logs/', urlencodedParser, (req, res) => {
+  const { from, to, limit } = req.query;
+  let idJson = { id: req.params._id };
+  let idToCheck = idJson.id;
+
+  NewUser.findById(idToCheck, (err, data) => {
+    var query = {
+      username: data.username
+    }
+
+    if (from !== undefined && to === undefined) {
+      query.date = { $gte: new Date(from)}
+    } else if (to !== undefined && from === undefined) {
+      query.date = { $lte: new Date(to) }
+    } else if ( from !== undefined && to !== undefined) {
+      query.date = { $gte: new Date(from), $lte: new Date(to)}
+    }
+
+    let limitChecker = (limit) => {
+      let maxLimit = 100;
+      if (limit) {
+        return limit;
+      } else {
+        return maxLimit;
+      }
+    }
+
+    if (err) {
+      console.error("Error with ID =>", err);
+    } else {
+      NewExercise.find((query), null, {limit: limitChecker(+limit)}, (err, docs) => {
+        let loggedArray = [];
+        if (err) {
+          console.error("Error With Query =>", err);
+        } else {
+          let documents = docs;
+          let loggedArray = documents.map((item) => {
+            return {
+              description: item.description,
+              duration: item.duration,
+              log: item.date.toDateString()
+            }
+          })
+
+          const test = new NewLog({
+            username: data.username,
+            count: loggedArray.length,
+            log: loggedArray,
+          })
+
+          test.save((err, data) => {
+            if (err) {
+              console.error("Error With Saving Exercise =>", err);
+            } else {
+              console.log("Save Exercise Successfully");
+              res.json({
+                _id: idToCheck,
+                username: data.username,
+                count: data.count,
+                log: loggedArray
+              })
+            }
+          })
+        }
+      })
+    }
   })
+
 })
 
 const listener = app.listen(process.env.PORT || 3000, () => {
